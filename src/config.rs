@@ -5,6 +5,7 @@ use std::{fs, path::Path};
 pub struct Config {
     pub database_url: String,
     pub api_bind: String,
+    pub jwt_secret: String,
 }
 
 impl Config {

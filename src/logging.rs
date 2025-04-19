@@ -60,7 +60,7 @@ where
         // Escribimos el encabezado
         write!(
             writer,
-            "[API_1][{}][{}][{}:{}] ",
+            "[GH_1][{}][{}][{}:{}] ",
             now, level, target, line
         )?;
 
