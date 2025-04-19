@@ -21,6 +21,15 @@ async fn main() -> std::io::Result<()> {
     let jwt_secret = config.jwt_secret.clone();
     let token = auth::authentication::generate_token(iss, sub, duration, user_id, jwt_secret);
     tracing::info!("Generated JWT Token: {}", token);
+    let result = auth::authentication::validate_token(token, config.jwt_secret.clone());
+    match result {
+        Ok(claims) => {
+            tracing::info!("Token claims: {:?}", claims);
+        },
+        Err(err) => {
+            tracing::error!("Error validating token: {}", err);
+        }
+    }
 
     tracing::info!("🚀 Gym Helper has been started.");
 
