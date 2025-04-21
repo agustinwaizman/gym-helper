@@ -1,19 +1,10 @@
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use serde::{Serialize, Deserialize};
 use chrono::{Utc, Duration};
 use tracing::{info, error};
+use crate::auth::models::Claims;
 
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Claims {
-    pub iss: String,
-    pub sub: String,
-    pub exp: usize,
-    pub iat: usize,
-    pub user_id: usize,
-}
-
-pub fn generate_token(iss: String, sub: String, duration: i64, user_id: usize, key: String) -> String{
+pub fn generate_token(iss: String, sub: String, duration: i64, user_id: usize, role: String, key: String) -> String{
     let header = Header::new(Algorithm::HS512);
     let encoding_key = EncodingKey::from_secret(key.as_ref());
 
@@ -25,7 +16,8 @@ pub fn generate_token(iss: String, sub: String, duration: i64, user_id: usize, k
         sub,
         exp,
         iat,
-        user_id
+        user_id,
+        role
     };
 
     encode(&header, &claims, &encoding_key).unwrap()
