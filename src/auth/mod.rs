@@ -1,6 +1,7 @@
 pub mod jwt;
 pub mod models;
 pub mod handlers;
+pub mod middleware;
 
 use actix_web::web;
 

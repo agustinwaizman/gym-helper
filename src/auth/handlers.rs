@@ -28,9 +28,15 @@ pub async fn register(
     pool: web::Data<MySqlPool>,
     req: web::Json<RegisterRequest>,
 ) -> HttpResponse {
+
+    // Log request data
+    tracing::info!("Request: {:?}", req);
+
     let hashed = match hash_password(&req.password) {
         Ok(hash) => hash,
-        Err(_) => return HttpResponse::InternalServerError().body("Error hashing password")
+        Err(e) => {
+            tracing::error!("Error hashing password: {}", e);
+            return HttpResponse::InternalServerError().body("Error hashing password")}
     };
 
     let role = match req.role {
@@ -49,8 +55,10 @@ pub async fn register(
             .await;
 
     match result {
-        Ok(_) => HttpResponse::Created()
-            .body("User created"),
+        Ok(_) => {
+            tracing::info!("User created: {}", req.username);
+            HttpResponse::Created()
+                .body("User created")},
         Err(err) => {
             tracing::error!("Error creating user: {}", err);
             HttpResponse::InternalServerError().body("Error creating user")
@@ -64,6 +72,9 @@ async fn login(
     req: web::Json<LoginRequest>,
     data: web::Data<crate::config::Config>,
 ) -> HttpResponse {
+    // Log request data
+    tracing::info!("Request: {:?}", req);
+
     let user_result = sqlx::query_as!(
         User,
         r#"
@@ -93,10 +104,12 @@ async fn login(
                     format!("{:?}", user.role),
                     data.jwt_secret.clone(),
                 );
+                tracing::info!("User logged in: {}", req.username);
                 HttpResponse::Ok().json(serde_json::json!({
                     "token": token,
                 }))
             } else {
+                tracing::info!("Invalid password for user: {}", req.username);
                 HttpResponse::Unauthorized().body("Invalid password")
             }
         },

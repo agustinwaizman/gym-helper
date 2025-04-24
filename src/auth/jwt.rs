@@ -1,6 +1,6 @@
+use actix_web::web;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use chrono::{Utc, Duration};
-use tracing::{info, error};
 use crate::auth::models::Claims;
 
 
@@ -23,9 +23,11 @@ pub fn generate_token(iss: String, sub: String, duration: i64, user_id: usize, r
     encode(&header, &claims, &encoding_key).unwrap()
 }
 
-pub fn validate_token(token: String, key: String) -> Result<Claims, jsonwebtoken::errors::Error> {
+pub fn validate_token(
+        token: String,
+        data: web::Data<crate::config::Config>) -> Result<Claims, jsonwebtoken::errors::Error> {
     let validation = Validation::new(Algorithm::HS512);
-    let decoding_key = DecodingKey::from_secret(key.as_ref());
+    let decoding_key = DecodingKey::from_secret(data.jwt_secret.as_ref());
 
     let result = decode::<Claims>(
         &token,
@@ -35,11 +37,11 @@ pub fn validate_token(token: String, key: String) -> Result<Claims, jsonwebtoken
 
     match result {
         Ok(token_data) => {
-            info!("token is valid");
+            tracing::info!("valid token");
             Ok(token_data.claims)
         },
         Err(err) => {
-            error!("token is invalid: {}", err);
+            tracing::error!("token is invalid: {}", err);
             Err(err)},
     }
 }

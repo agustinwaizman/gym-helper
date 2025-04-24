@@ -6,6 +6,8 @@ use tracing_subscriber::registry::LookupSpan;
 use tracing_appender::rolling::RollingFileAppender;
 use std::fmt::Result;
 
+// TODO: Ver de aplicar logs a todos los servicios y modulos de la app
+
 pub fn init() -> WorkerGuard {
     // Configura un appender de archivo que rota diariamente
     let file_appender = RollingFileAppender::new(
