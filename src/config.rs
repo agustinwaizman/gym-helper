@@ -1,10 +1,11 @@
 use serde::Deserialize;
 use std::{fs, path::Path};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     pub database_url: String,
     pub api_bind: String,
+    pub jwt_secret: String,
 }
 
 impl Config {
