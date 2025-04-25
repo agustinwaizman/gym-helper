@@ -1,7 +1,6 @@
-use actix_web::{post, web, HttpResponse};
-use sqlx::MySqlPool;
-use crate::auth::models::{RegisterRequest, LoginRequest, User, UserRole};
-use crate::auth::jwt::generate_token;
+use sqlx::mysql::MySqlQueryResult;
+use sqlx::{self, MySqlPool};
+use crate::auth::models::{User, UserRole};
 use argon2::{Argon2, PasswordHasher};
 use argon2::password_hash::{SaltString, PasswordHash, PasswordVerifier, rand_core::OsRng};
 
@@ -23,59 +22,39 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
     }
 }
 
-#[post("/register")]
-pub async fn register(
-    pool: web::Data<MySqlPool>,
-    req: web::Json<RegisterRequest>,
-) -> HttpResponse {
-
-    // Log request data
-    tracing::info!("Request: {:?}", req);
-
-    let hashed = match hash_password(&req.password) {
+pub async fn create_user_in_db(
+    pool: &MySqlPool,
+    username: &str,
+    password: &str,
+    role: &str,
+) -> Result<MySqlQueryResult, sqlx::Error> {
+    let hashed_password = match hash_password(password) {
         Ok(hash) => hash,
         Err(e) => {
             tracing::error!("Error hashing password: {}", e);
-            return HttpResponse::InternalServerError().body("Error hashing password")}
-    };
-
-    let role = match req.role {
-        UserRole::Admin => "Admin",
-        UserRole::Trainer => "Trainer",
+            return Err(sqlx::Error::ColumnNotFound("Error hashing password".to_string()));
+        }
     };
 
     let result = sqlx::query!(
         r#"
         INSERT INTO users (username, hash, role) VALUES (?, ?, ?)
         "#,
-        req.username,
-        hashed,
-        role)
-            .execute(pool.get_ref())
-            .await;
+        username,
+        hashed_password,
+        role
+    )
+    .execute(pool)
+    .await;
 
-    match result {
-        Ok(_) => {
-            tracing::info!("User created: {}", req.username);
-            HttpResponse::Created()
-                .body("User created")},
-        Err(err) => {
-            tracing::error!("Error creating user: {}", err);
-            HttpResponse::InternalServerError().body("Error creating user")
-        }
-    }
+    result
 }
 
-#[post("/login")]
-async fn login(
-    pool: web::Data<MySqlPool>,
-    req: web::Json<LoginRequest>,
-    data: web::Data<crate::config::Config>,
-) -> HttpResponse {
-    // Log request data
-    tracing::info!("Request: {:?}", req);
-
-    let user_result = sqlx::query_as!(
+pub async fn get_user_by_username(
+    pool: &MySqlPool,
+    username: &str,
+) -> Result<Option<User>, sqlx::Error> {
+    let user = sqlx::query_as!(
         User,
         r#"
         SELECT
@@ -88,38 +67,9 @@ async fn login(
         FROM users
         WHERE username = ?
         "#,
-        req.username
+        username
     )
-    .fetch_optional(pool.get_ref())
-    .await;
-
-    match user_result {
-        Ok(Some(user)) => {
-            if verify_password(&req.password, &user.hash) {
-                let token = generate_token(
-                    "Gym_Helper".to_string(),
-                    user.username.clone(),
-                    60,
-                    user.id as usize,
-                    format!("{:?}", user.role),
-                    data.jwt_secret.clone(),
-                );
-                tracing::info!("User logged in: {}", req.username);
-                HttpResponse::Ok().json(serde_json::json!({
-                    "token": token,
-                }))
-            } else {
-                tracing::info!("Invalid password for user: {}", req.username);
-                HttpResponse::Unauthorized().body("Invalid password")
-            }
-        },
-        Ok(None) => {
-            tracing::error!("User not found: {}", req.username);
-            HttpResponse::Unauthorized().body("Invalid username or password")
-        },
-        Err(err) => {
-            tracing::error!("Error fetching user: {}", err);
-            HttpResponse::InternalServerError().body("Error fetching user")
-        }
-    }
+    .fetch_optional(pool)
+    .await?;
+    Ok(user)
 }
