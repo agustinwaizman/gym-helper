@@ -1,6 +1,7 @@
 use actix_web::{post, web, HttpResponse};
 use sqlx::MySqlPool;
-use crate::auth::models::{RegisterRequest, LoginRequest, UserRole};
+use crate::auth::models::requests::{RegisterRequest, LoginRequest};
+use crate::auth::models::users::UserRole;
 use crate::auth::jwt::generate_token;
 use crate::auth::handlers::{create_user_in_db, get_user_by_username, verify_password};
 

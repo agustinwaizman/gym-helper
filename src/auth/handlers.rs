@@ -1,6 +1,6 @@
 use sqlx::mysql::MySqlQueryResult;
 use sqlx::{self, MySqlPool};
-use crate::auth::models::{User, UserRole};
+use crate::auth::models::users::{User, UserRole};
 use argon2::{Argon2, PasswordHasher};
 use argon2::password_hash::{SaltString, PasswordHash, PasswordVerifier, rand_core::OsRng};
 

@@ -1,7 +1,7 @@
 use actix_web::web;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use chrono::{Utc, Duration};
-use crate::auth::models::Claims;
+use crate::auth::models::jwt_models::Claims;
 
 
 pub fn generate_token(iss: String, sub: String, duration: i64, user_id: usize, role: String, key: String) -> String{
