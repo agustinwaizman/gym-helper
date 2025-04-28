@@ -42,3 +42,5 @@ async fn main() -> std::io::Result<()> {
 async fn test_of_auth() -> &'static str {
     "Hello, this is a test of auth"
 }
+
+//TODO: Queda pendiente implementar el middleware para manejar los roles de los usuarios y las rutas

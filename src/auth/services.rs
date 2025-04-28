@@ -1,6 +1,7 @@
 use actix_web::{post, web, HttpResponse};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use sqlx::MySqlPool;
+use crate::auth::models::jwt_models::TokenType;
 use crate::auth::models::requests::{RegisterRequest, LoginRequest};
 use crate::auth::models::responses::{LoginResult, RefreshResult};
 use crate::auth::models::users::UserRole;
@@ -51,7 +52,7 @@ async fn login(
                     30,
                     user.id as usize,
                     format!("{:?}", user.role),
-                    "Access".to_string(),
+                    TokenType::Access,
                     data.jwt_secret.clone(),
                 );
                 let refresh_token = generate_token(
@@ -60,7 +61,7 @@ async fn login(
                     1440,
                     user.id as usize,
                     format!("{:?}", user.role),
-                    "Refresh".to_string(),
+                    TokenType::Refresh,
                     data.jwt_secret.clone(),
                 );
                 let response = LoginResult {
@@ -96,8 +97,12 @@ pub async fn refresh(
     let claims = validate_token(refresh_jwt.token().to_string(), data.clone());
 
     match claims {
-        Ok(claims) => {
-            if claims.token_type == "Refresh" {
+        Ok(claims) => match claims.token_type {
+            TokenType::Access => {
+                tracing::error!("Invalid token type: {:?}", claims.token_type);
+                return HttpResponse::Unauthorized().body("Invalid token type")
+            },
+            TokenType::Refresh => {
                 tracing::info!("Refresh token is valid");
                 let new_token = generate_token(
                     claims.iss,
@@ -105,14 +110,11 @@ pub async fn refresh(
                     30,
                     claims.user_id,
                     claims.role,
-                    "Access".to_string(),
+                    TokenType::Access,
                     data.jwt_secret.clone(),
                 );
                 tracing::info!("New token generated for user: {}", claims.sub);
                 HttpResponse::Ok().json(RefreshResult{token: new_token})
-            } else {
-                tracing::error!("Invalid token type: {:?}", claims.token_type);
-                return HttpResponse::Unauthorized().body("Invalid token type")
             }
         },
         Err(err) => {
