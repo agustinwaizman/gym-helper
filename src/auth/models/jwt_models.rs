@@ -7,5 +7,6 @@ pub struct Claims {
     pub exp: usize,
     pub iat: usize,
     pub user_id: usize,
+    pub token_type: String,
     pub role: String,
 }

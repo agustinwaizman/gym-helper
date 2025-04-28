@@ -19,6 +19,10 @@ pub async fn auth_middleware(
 
     match result {
         Ok(claims) => {
+            if claims.token_type != "Access" {
+                error!("Invalid token type: {:?}", claims.token_type);
+                return Err((error::ErrorUnauthorized("Invalid token type"), req));
+            }
             info!("Token is valid: {:?}", claims);
             return Ok(req);
         },

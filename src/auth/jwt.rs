@@ -2,9 +2,13 @@ use actix_web::web;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use chrono::{Utc, Duration};
 use crate::auth::models::jwt_models::Claims;
+use jsonwebtoken::errors::{Error, ErrorKind};
 
 
-pub fn generate_token(iss: String, sub: String, duration: i64, user_id: usize, role: String, key: String) -> String{
+pub fn generate_token(
+        iss: String, sub: String, duration: i64,
+        user_id: usize, role: String, 
+        token_type: String, key: String) -> String{
     let header = Header::new(Algorithm::HS512);
     let encoding_key = EncodingKey::from_secret(key.as_ref());
 
@@ -16,6 +20,7 @@ pub fn generate_token(iss: String, sub: String, duration: i64, user_id: usize, r
         sub,
         exp,
         iat,
+        token_type,
         user_id,
         role
     };
@@ -37,8 +42,14 @@ pub fn validate_token(
 
     match result {
         Ok(token_data) => {
-            tracing::info!("valid token");
-            Ok(token_data.claims)
+
+            if token_data.claims.token_type != "refresh" {
+                tracing::info!("valid token");
+                Ok(token_data.claims)
+            } else {
+                tracing::error!("invalid token type");
+                Err(Error::from(ErrorKind::InvalidToken))
+            }
         },
         Err(err) => {
             tracing::error!("token is invalid: {}", err);

@@ -1,8 +1,10 @@
 use actix_web::{post, web, HttpResponse};
+use actix_web_httpauth::extractors::bearer::BearerAuth;
 use sqlx::MySqlPool;
 use crate::auth::models::requests::{RegisterRequest, LoginRequest};
+use crate::auth::models::responses::{LoginResult, RefreshResult};
 use crate::auth::models::users::UserRole;
-use crate::auth::jwt::generate_token;
+use crate::auth::jwt::{generate_token, validate_token};
 use crate::auth::handlers::{create_user_in_db, get_user_by_username, verify_password};
 
 
@@ -46,15 +48,27 @@ async fn login(
                 let token = generate_token(
                     "Gym_Helper".to_string(),
                     user.username.clone(),
-                    60,
+                    30,
                     user.id as usize,
                     format!("{:?}", user.role),
+                    "Access".to_string(),
                     data.jwt_secret.clone(),
                 );
+                let refresh_token = generate_token(
+                    "Gym_Helper".to_string(),
+                    user.username.clone(),
+                    1440,
+                    user.id as usize,
+                    format!("{:?}", user.role),
+                    "Refresh".to_string(),
+                    data.jwt_secret.clone(),
+                );
+                let response = LoginResult {
+                    token: token,
+                    refresh: refresh_token,
+                };
                 tracing::info!("User logged in: {}", req.username);
-                HttpResponse::Ok().json(serde_json::json!({
-                    "token": token,
-                }))
+                HttpResponse::Ok().json(response)
             } else {
                 tracing::info!("Invalid password for user: {}", req.username);
                 HttpResponse::Unauthorized().body("Invalid password")
@@ -67,6 +81,43 @@ async fn login(
         Err(err) => {
             tracing::error!("Error fetching user: {}", err);
             HttpResponse::InternalServerError().body("Error fetching user")
+        }
+    }
+}
+
+#[post("/refresh_token")]
+pub async fn refresh(
+        refresh_jwt: Option<BearerAuth>,
+        data: web::Data<crate::config::Config>) -> HttpResponse {
+    let Some(refresh_jwt) = refresh_jwt else {
+        return HttpResponse::Forbidden().body("Missing refresh token")
+    };
+
+    let claims = validate_token(refresh_jwt.token().to_string(), data.clone());
+
+    match claims {
+        Ok(claims) => {
+            if claims.token_type == "Refresh" {
+                tracing::info!("Refresh token is valid");
+                let new_token = generate_token(
+                    claims.iss,
+                    claims.sub.clone(),
+                    30,
+                    claims.user_id,
+                    claims.role,
+                    "Access".to_string(),
+                    data.jwt_secret.clone(),
+                );
+                tracing::info!("New token generated for user: {}", claims.sub);
+                HttpResponse::Ok().json(RefreshResult{token: new_token})
+            } else {
+                tracing::error!("Invalid token type: {:?}", claims.token_type);
+                return HttpResponse::Unauthorized().body("Invalid token type")
+            }
+        },
+        Err(err) => {
+            tracing::error!("Error generating new token: {}", err);
+            HttpResponse::Unauthorized().body("Error generating new token")
         }
     }
 }

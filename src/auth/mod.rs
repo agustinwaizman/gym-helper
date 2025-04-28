@@ -11,5 +11,6 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
         web::scope("/auth")
             .service(services::register)
             .service(services::login)
+            .service(services::refresh)
     );
 }

@@ -7,6 +7,7 @@ mod clients;
 use actix_web::{web, App, HttpServer};
 use config::Config;
 use db::create_pool;
+use actix_web_httpauth::extractors::bearer::Config as BearerConfig;
 use actix_web_httpauth::middleware::HttpAuthentication;
 
 #[actix_web::main]
@@ -26,6 +27,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(db_pool.clone()))
             .app_data(web::Data::new(config.clone()))
+            .app_data(BearerConfig::default().realm("jwt"))
             .configure(auth::routes)
             .service(
                 web::scope("/api").wrap(auth)
