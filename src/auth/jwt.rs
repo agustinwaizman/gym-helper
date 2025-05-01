@@ -1,10 +1,13 @@
 use actix_web::web;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use chrono::{Utc, Duration};
-use crate::auth::models::Claims;
+use crate::auth::models::jwt_models::{Claims, TokenType};
 
 
-pub fn generate_token(iss: String, sub: String, duration: i64, user_id: usize, role: String, key: String) -> String{
+pub fn generate_token(
+        iss: String, sub: String, duration: i64,
+        user_id: usize, role: String, 
+        token_type: TokenType, key: String) -> String{
     let header = Header::new(Algorithm::HS512);
     let encoding_key = EncodingKey::from_secret(key.as_ref());
 
@@ -16,6 +19,7 @@ pub fn generate_token(iss: String, sub: String, duration: i64, user_id: usize, r
         sub,
         exp,
         iat,
+        token_type,
         user_id,
         role
     };
@@ -29,19 +33,14 @@ pub fn validate_token(
     let validation = Validation::new(Algorithm::HS512);
     let decoding_key = DecodingKey::from_secret(data.jwt_secret.as_ref());
 
-    let result = decode::<Claims>(
-        &token,
-        &decoding_key,
-        &validation,
-    );
-
-    match result {
+    match decode::<Claims>(&token, &decoding_key, &validation) {
         Ok(token_data) => {
-            tracing::info!("valid token");
+            tracing::info!("Token is valid");
             Ok(token_data.claims)
         },
         Err(err) => {
-            tracing::error!("token is invalid: {}", err);
-            Err(err)},
+            tracing::error!("Error decoding token: {}", err);
+            Err(err)
+        }
     }
 }

@@ -7,7 +7,9 @@ mod clients;
 use actix_web::{web, App, HttpServer};
 use config::Config;
 use db::create_pool;
+use actix_web_httpauth::extractors::bearer::Config as BearerConfig;
 use actix_web_httpauth::middleware::HttpAuthentication;
+use actix_web_grants::protect;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -26,6 +28,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(db_pool.clone()))
             .app_data(web::Data::new(config.clone()))
+            .app_data(BearerConfig::default().realm("jwt"))
             .configure(auth::routes)
             .service(
                 web::scope("/api").wrap(auth)
@@ -37,6 +40,9 @@ async fn main() -> std::io::Result<()> {
 }
 
 #[actix_web::get("/test")]
+#[protect("Trainer")]
 async fn test_of_auth() -> &'static str {
     "Hello, this is a test of auth"
 }
+
+//TODO: Queda pendiente implementar el middleware para manejar los roles de los usuarios y las rutas
