@@ -7,12 +7,12 @@
 // DELETE para eliminar un cliente (soft delete)
 // PATCH para actualizar un cliente (soft delete)
 
-use actix_web::{post, web, HttpResponse};
+use actix_web::{get, post, web, HttpResponse};
 use sqlx::MySqlPool;
 use crate::clients::models::requests::CreateClientRequest;
-use crate::clients::handlers::create_client_in_db;
+use super::handlers::{obtain_client_by_id, create_client_in_db};
 
-#[post("/clients")]
+#[post("/")]
 pub async fn create_client(
     pool: web::Data<MySqlPool>,
     req: web::Json<CreateClientRequest>
@@ -28,6 +28,22 @@ pub async fn create_client(
         }
     }
 }
+
+#[get("/{id}")]
+pub async fn get_client_by_id(
+    pool: web::Data<MySqlPool>,
+    id: web::Path<i32>,
+) -> HttpResponse {
+    match obtain_client_by_id(&pool, id.into_inner()).await {
+        Ok(Some(client)) => HttpResponse::Ok().json(client),
+        Ok(None) => HttpResponse::NotFound().body("Client not found"),
+        Err(e) => {
+            tracing::error!("Error fetching client: {}", e);
+            HttpResponse::InternalServerError().body("Error fetching client")
+        }
+    }
+}
+
 
 // #[get("/clients/{id}")]
 // pub async fn get_client_by_id(

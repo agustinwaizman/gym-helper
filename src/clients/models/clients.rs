@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use sqlx::{Row, mysql::MySqlRow};
 use chrono::NaiveDateTime;
 
 #[derive(Serialize, Deserialize)]
@@ -15,23 +16,18 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(
-        id: i32, name: String, last_name: String,
-        age: i32, phone: String, active: bool,
-        created_at: NaiveDateTime, updated_at: NaiveDateTime,
-        deleted_at: Option<NaiveDateTime>,
-    ) -> Self {
 
+    pub fn from_row(row: &MySqlRow) -> Self {
         Self {
-            id,
-            name,
-            last_name,
-            age,
-            phone,
-            active,
-            created_at,
-            updated_at,
-            deleted_at,
+            id: row.get("id"),
+            name: row.get("name"),
+            last_name: row.get("last_name"),
+            age: row.get("age"),
+            phone: row.get("phone"),
+            active: row.get::<i8, _>("active") != 0,
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+            deleted_at: row.get("deleted_at"),
         }
     }
 }

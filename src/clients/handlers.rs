@@ -1,5 +1,6 @@
 use sqlx::mysql::MySqlQueryResult;
 use sqlx::{self, MySqlPool};
+use super::models::clients::Client;
 
 
 pub async fn create_client_in_db(
@@ -23,4 +24,19 @@ pub async fn create_client_in_db(
     .await;
 
     result
+}
+
+pub async fn obtain_client_by_id(
+    pool: &MySqlPool,
+    id: i32,
+) -> Result<Option<Client>, sqlx::Error> {
+    let row = sqlx::query(
+        r#"
+        SELECT * FROM clients WHERE id = ?
+        "#)
+        .bind(id)
+        .fetch_optional(pool)
+        .await?;
+
+    Ok(row.map(|row| Client::from_row(&row)))
 }
