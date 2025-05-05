@@ -9,8 +9,8 @@
 
 use actix_web::{get, post, web, HttpResponse};
 use sqlx::MySqlPool;
-use crate::clients::models::requests::CreateClientRequest;
-use super::handlers::{obtain_client_by_id, create_client_in_db};
+use crate::clients::models::requests::{CreateClientRequest, ClientQueryParams};
+use super::handlers::{obtain_client_by_id, create_client_in_db, obtain_clients, filter_clients};
 
 #[post("/")]
 pub async fn create_client(
@@ -40,6 +40,33 @@ pub async fn get_client_by_id(
         Err(e) => {
             tracing::error!("Error fetching client: {}", e);
             HttpResponse::InternalServerError().body("Error fetching client")
+        }
+    }
+}
+
+#[get("/")]
+pub async fn get_clients(
+    pool: web::Data<MySqlPool>,
+) -> HttpResponse {
+    match obtain_clients(&pool).await {
+        Ok(clients) => HttpResponse::Ok().json(clients),
+        Err(e) => {
+            tracing::error!("Error fetching clients: {}", e);
+            HttpResponse::InternalServerError().body("Error fetching clients")
+        }
+    }
+}
+
+#[get("/filter")]
+pub async fn get_clients_by_query_params(
+    pool: web::Data<MySqlPool>,
+    query: web::Query<ClientQueryParams>,
+) -> HttpResponse {
+    match filter_clients(&pool, query.into_inner()).await {
+        Ok(clients) => HttpResponse::Ok().json(clients),
+        Err(e) => {
+            tracing::error!("Error fetching clients: {}", e);
+            HttpResponse::InternalServerError().body("Error fetching clients")
         }
     }
 }
