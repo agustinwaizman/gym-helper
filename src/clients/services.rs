@@ -7,10 +7,12 @@
 // DELETE para eliminar un cliente (soft delete)
 // PATCH para actualizar un cliente (soft delete)
 
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{delete, get, post, web, HttpResponse};
 use sqlx::MySqlPool;
 use crate::clients::models::requests::{CreateClientRequest, ClientQueryParams};
-use super::handlers::{obtain_client_by_id, create_client_in_db, obtain_clients, filter_clients};
+use super::handlers::{
+    obtain_client_by_id, create_client_in_db,
+    obtain_clients, filter_clients, delete_client};
 
 #[post("/")]
 pub async fn create_client(
@@ -71,19 +73,16 @@ pub async fn get_clients_by_query_params(
     }
 }
 
-
-// #[get("/clients/{id}")]
-// pub async fn get_client_by_id(
-//     pool: web::Data<MySqlPool>,
-//     id: web::Path<i32>,
-// ) -> HttpResponse {
-//     let client = sqlx::query_as::<_, Client>("SELECT * FROM clients WHERE id = ?")
-//         .bind(id.into_inner())
-//         .fetch_one(pool.get_ref())
-//         .await;
-
-//     match client {
-//         Ok(client) => HttpResponse::Ok().json(client),
-//         Err(_) => HttpResponse::NotFound().body("Client not found"),
-//     }
-// }
+#[delete("/{id}")]
+pub async fn delete_client_by_id(
+    pool: web::Data<MySqlPool>,
+    id: web::Path<i32>,
+) -> HttpResponse {
+    match delete_client(&pool, id.into_inner()).await {
+        Ok(_) => HttpResponse::Ok().body("Client deleted successfully"),
+        Err(e) => {
+            tracing::error!("Error deleting client: {}", e);
+            HttpResponse::InternalServerError().body("Error deleting client")
+        }
+    }
+}

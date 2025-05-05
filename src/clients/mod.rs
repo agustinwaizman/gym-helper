@@ -12,5 +12,6 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .service(services::get_clients)
             .service(services::get_clients_by_query_params)
             .service(services::get_client_by_id)
+            .service(services::delete_client_by_id)
     );
 }

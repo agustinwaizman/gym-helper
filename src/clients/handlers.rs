@@ -124,3 +124,19 @@ pub async fn filter_clients(
         .await?;
     Ok(rows.iter().map(Client::from_row).collect())
 }
+
+pub async fn delete_client(
+    pool: &MySqlPool,
+    id: i32
+) -> Result<MySqlQueryResult, sqlx::Error> {
+    let result = sqlx::query(
+        r#"
+        UPDATE clients 
+        SET deleted_at = NOW(), active = false
+        WHERE id = ?"#)
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    Ok(result)
+}
