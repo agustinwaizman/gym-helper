@@ -1,27 +1,24 @@
 use sqlx::mysql::MySqlQueryResult;
 use sqlx::{self, MySqlPool};
 use super::models::clients::Client;
-use super::models::requests::ClientQueryParams;
+use super::models::requests::{ClientQueryParams, CreateClientRequest};
 use sqlx::Arguments;
 
 
 pub async fn create_client_in_db(
     pool: &MySqlPool,
-    name: &str,
-    last_name: &str,
-    age: i32,
-    phone: &str,
+    req: CreateClientRequest,
 ) -> Result<MySqlQueryResult, sqlx::Error> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         INSERT INTO clients (name, last_name, age, phone, active) VALUES (?, ?, ?, ?, ?)
-        "#,
-        name,
-        last_name,
-        age,
-        phone,
-        true // active by default
+        "#
     )
+    .bind(req.name)
+    .bind(req.last_name)
+    .bind(req.age)
+    .bind(req.phone)
+    .bind(true)
     .execute(pool)
     .await;
 
@@ -138,5 +135,44 @@ pub async fn delete_client(
     .execute(pool)
     .await?;
 
+    Ok(result)
+}
+
+pub async fn update_client(
+    pool: &MySqlPool,
+    id: i32,
+    req: CreateClientRequest
+) -> Result<MySqlQueryResult, sqlx::Error> {
+    let result = sqlx::query(
+        r#"
+        UPDATE clients
+        SET name = ?, last_name = ?, age = ?, phone = ?, active = ?, deleted_at = NULL
+        WHERE id = ?
+        "#)
+        .bind(req.name)
+        .bind(req.last_name)
+        .bind(req.age)
+        .bind(req.phone)
+        .bind(true)
+        .bind(id)
+        .execute(pool)
+        .await;
+
+    result
+}
+
+pub async fn activate_client(
+    pool: &MySqlPool,
+    id: i32,
+) -> Result<MySqlQueryResult, sqlx::Error> {
+    let result = sqlx::query(
+        r#"
+        UPDATE clients
+        SET active = true, deleted_at = NULL
+        WHERE id = ?
+        "#)
+        .bind(id)
+        .execute(pool)
+        .await?;
     Ok(result)
 }

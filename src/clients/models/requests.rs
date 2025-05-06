@@ -16,9 +16,9 @@ pub struct ClientQueryParams {
     pub age: Option<i32>,
     pub phone: Option<String>,
     pub active: Option<bool>,
-    pub created_at: Option<NaiveDateTime>, // Use a more specific type if needed
-    pub updated_at: Option<NaiveDateTime>, // Use a more specific type if needed
-    pub deleted_at: Option<NaiveDateTime>, // Use a more specific type if needed
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+    pub deleted_at: Option<NaiveDateTime>,
     pub created_from: Option<NaiveDateTime>,
     pub created_to: Option<NaiveDateTime>,
     pub updated_from: Option<NaiveDateTime>,
