@@ -30,6 +30,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(config.clone()))
             .app_data(BearerConfig::default().realm("jwt"))
             .configure(auth::routes)
+            .configure(clients::routes)
             .service(
                 web::scope("/api").wrap(auth)
                     .service(test_of_auth))
