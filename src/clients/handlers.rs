@@ -3,6 +3,7 @@ use sqlx::{self, MySqlPool};
 use super::models::clients::Client;
 use super::models::requests::{ClientQueryParams, CreateClientRequest};
 use sqlx::Arguments;
+use sqlx::mysql::MySqlArguments;
 
 
 pub async fn create_client_in_db(
@@ -58,7 +59,7 @@ pub async fn filter_clients(
     params: ClientQueryParams,
 ) -> Result <Vec<Client>, sqlx::Error> {
     let mut query = String::from("SELECT * FROM clients WHERE 1=1");
-    let mut args = sqlx::mysql::MySqlArguments::default();
+    let mut args = MySqlArguments::default();
 
     if let Some(name) = &params.name {
         query.push_str(" AND name = ?");

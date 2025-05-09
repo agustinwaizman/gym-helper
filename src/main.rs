@@ -3,6 +3,7 @@ mod db;
 mod logging;
 mod auth;
 mod clients;
+mod membership;
 
 use actix_web::{web, App, HttpServer};
 use config::Config;
@@ -31,6 +32,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(BearerConfig::default().realm("jwt"))
             .configure(auth::routes)
             .configure(clients::routes)
+            .configure(membership::routes)
             .service(
                 web::scope("/api").wrap(auth)
                     .service(test_of_auth))
@@ -45,5 +47,3 @@ async fn main() -> std::io::Result<()> {
 async fn test_of_auth() -> &'static str {
     "Hello, this is a test of auth"
 }
-
-//TODO: Queda pendiente implementar el middleware para manejar los roles de los usuarios y las rutas

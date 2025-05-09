@@ -1,12 +1,3 @@
-// GET mediante id
-// GET mediante query params (name, last_name, phone, membership, active)
-// GET todos los clientes
-
-// POST para crear un cliente *
-// PUT para actualizar un cliente
-// DELETE para eliminar un cliente (soft delete)
-// PATCH para actualizar un cliente (soft delete)
-
 use actix_web::{delete, get, patch, post, put, web, HttpResponse};
 use sqlx::MySqlPool;
 use crate::clients::models::requests::{CreateClientRequest, ClientQueryParams};
@@ -79,6 +70,7 @@ pub async fn delete_client_by_id(
     pool: web::Data<MySqlPool>,
     id: web::Path<i32>,
 ) -> HttpResponse {
+    // TODO: Ver por que en caso de no encontrar el cliente devuelve un 200 Ok
     match delete_client(&pool, id.into_inner()).await {
         Ok(_) => HttpResponse::Ok().body("Client deleted successfully"),
         Err(e) => {
