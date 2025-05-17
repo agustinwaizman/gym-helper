@@ -1,15 +1,21 @@
 use sqlx::MySqlPool;
-use actix_web::{web, post, HttpResponse};
+use actix_web::{delete, post, web, HttpResponse};
 use super::models::requests::{NewMembershipRequest, NewDisciplineRequest};
 use super::handlers::{
-    create_discipline_in_db, create_membership_in_db};
+    create_discipline_handler, create_membership_handler,
+    delete_discipline_handler, delete_membership_by_discipline_handler,
+    activate_discipline_handler};
+
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////// DISCIPLINE ENDPOINTS //////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 
 #[post("/discipline")]
 pub async fn new_discipline(
     pool: web::Data<MySqlPool>,
     req: web::Json<NewDisciplineRequest>
 ) -> HttpResponse {
-    match create_discipline_in_db(&pool, req.into_inner()).await {
+    match create_discipline_handler(&pool, req.into_inner()).await {
         Ok(_) => {
             tracing::info!("Discipline created successfully");
             HttpResponse::Created().body("Discipline created successfully")
@@ -21,12 +27,53 @@ pub async fn new_discipline(
     }
 }
 
+#[delete("/discipline/{id}")]
+pub async fn delete_discipline(
+    pool: web::Data<MySqlPool>,
+    id: web::Path<i32>
+) -> HttpResponse {
+    // TODO: Implementar el delete de las membresias asociadas a la disciplina
+    let discipline_id = id.into_inner();
+    match delete_discipline_handler(&pool, discipline_id).await {
+        Ok(_) => {
+            delete_membership_by_discipline_handler(&pool, discipline_id).await.unwrap();
+            tracing::info!("Discipline deleted successfully");
+            HttpResponse::Ok().body("Discipline deleted successfully")
+        },
+        Err(e) => {
+            tracing::error!("Error deleting discipline: {}", e);
+            HttpResponse::InternalServerError().body("Error deleting discipline")
+        }
+    }
+}
+
+#[patch("/discipline/{id}")]
+pub async fn activate_discipline(
+    pool: web::Data<MySqlPool>,
+    id: web::Path<i32>
+) -> HttpResponse {
+    match activate_discipline_handler(&pool, id.into_inner()).await {
+        Ok(_) => {
+            tracing::info!("Discipline activated successfully");
+            HttpResponse::Ok().body("Discipline activated successfully")
+        },
+        Err(e) => {
+            tracing::error!("Error activating discipline: {}", e);
+            HttpResponse::InternalServerError().body("Error activating discipline")
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////// MEMBERSHIP ENDPOINTS //////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+
 #[post("/")]
 pub async fn new_membership(
     pool: web::Data<MySqlPool>,
     req: web::Json<NewMembershipRequest>
 ) -> HttpResponse {
-    match create_membership_in_db(&pool, req.into_inner()).await {
+    match create_membership_handler(&pool, req.into_inner()).await {
         Ok(_) => {
             tracing::info!("Membership created successfully");
             HttpResponse::Created().body("Membership created successfully")

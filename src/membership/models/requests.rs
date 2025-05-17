@@ -14,7 +14,6 @@ pub struct NewMembershipRequest {
     pub price: f32,
     pub discipline_id: i32,
     pub total_classes: i32,
-    pub active: bool,
     pub duration_days: Option<i32>,
 }
 

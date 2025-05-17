@@ -35,6 +35,9 @@ pub struct ClientMembership {
     pub remaining_classes: Option<i32>,
     pub expires_at: Option<NaiveDateTime>,
     pub active: bool,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
 }
 
 #[derive(Serialize, Deserialize)]
