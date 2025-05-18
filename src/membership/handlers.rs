@@ -103,3 +103,39 @@ pub async fn delete_membership_by_discipline_handler(
 
     result
 }
+
+pub async fn delete_membership_handler(
+    pool: &MySqlPool,
+    id: i32,
+) -> Result<MySqlQueryResult, sqlx::Error> {
+    let result = sqlx::query(
+        r#"
+        UPDATE memberships
+        SET active = false, deleted_at = NOW()
+        WHERE id = ?
+        "#
+    )
+    .bind(id)
+    .execute(pool)
+    .await;
+
+    result
+}
+
+pub async fn activate_membership_handler(
+    pool: &MySqlPool,
+    id: i32,
+) -> Result<MySqlQueryResult, sqlx::Error> {
+    let result = sqlx::query(
+        r#"
+        UPDATE memberships
+        SET active = true, deleted_at = NULL
+        WHERE id = ?
+        "#
+    )
+    .bind(id)
+    .execute(pool)
+    .await;
+
+    result
+}

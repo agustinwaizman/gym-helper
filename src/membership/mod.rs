@@ -10,5 +10,8 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .service(services::new_discipline)
             .service(services::new_membership)
             .service(services::delete_discipline)
+            .service(services::activate_discipline)
+            .service(services::delete_membership)
+            .service(services::activate_membership)
     );
 }
