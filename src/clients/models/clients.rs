@@ -16,7 +16,6 @@ pub struct Client {
 }
 
 impl Client {
-
     pub fn from_row(row: &MySqlRow) -> Self {
         Self {
             id: row.get("id"),

@@ -1,6 +1,7 @@
 use actix_web::{delete, get, patch, post, put, web, HttpResponse};
 use sqlx::MySqlPool;
-use crate::clients::models::requests::{CreateClientRequest, ClientQueryParams};
+use crate::clients::models::requests::{
+    CreateClientRequest, ClientQueryParams};
 use super::handlers::{
     obtain_client_by_id, create_client_in_db,
     obtain_clients, filter_clients, delete_client,

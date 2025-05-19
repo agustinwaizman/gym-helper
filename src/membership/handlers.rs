@@ -1,5 +1,6 @@
 use sqlx::mysql::MySqlQueryResult;
 use sqlx::{self, MySqlPool};
+use super::models::membership::Membership;
 use super::models::requests::{NewMembershipRequest, NewDisciplineRequest};
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -62,6 +63,26 @@ pub async fn activate_discipline_handler(
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////// MEMBERSHIP HANDLERS //////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
+
+pub async fn get_membership_by_id(
+    pool: &MySqlPool,
+    id: i32,
+) -> Result<Option<Membership>, sqlx::Error> {
+    let row = sqlx::query(
+        r#"
+        SELECT * FROM memberships WHERE id = ?
+        "#)
+        .bind(id)
+        .fetch_optional(pool)
+        .await?;
+
+    if let Some(row) = row {
+        let membership = Membership::from_row(&row);
+        Ok(Some(membership))
+    } else {
+        Ok(None)
+    }
+}
 
 pub async fn create_membership_handler(
     pool: &MySqlPool,

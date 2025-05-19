@@ -4,6 +4,7 @@ mod logging;
 mod auth;
 mod clients;
 mod membership;
+mod subscription;
 
 use actix_web::{web, App, HttpServer};
 use config::Config;
@@ -33,6 +34,7 @@ async fn main() -> std::io::Result<()> {
             .configure(auth::routes)
             .configure(clients::routes)
             .configure(membership::routes)
+            .configure(subscription::routes)
             .service(
                 web::scope("/api").wrap(auth)
                     .service(test_of_auth))

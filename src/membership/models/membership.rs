@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use sqlx::{mysql::MySqlRow, Row};
 
 #[derive(Serialize, Deserialize)]
 pub struct Discipline {
@@ -20,21 +21,7 @@ pub struct Membership {
     pub discipline_id: i32,
     pub total_classes: i32,
     pub active: bool,
-    pub duration_days: Option<i32>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-    pub deleted_at: Option<NaiveDateTime>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ClientMembership {
-    pub id: i32,
-    pub client_id: i32,
-    pub membership_id: i32,
-    pub purchased_at: NaiveDateTime,
-    pub remaining_classes: Option<i32>,
-    pub expires_at: Option<NaiveDateTime>,
-    pub active: bool,
+    pub duration_days: i32,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>,
@@ -45,4 +32,22 @@ pub struct ClassAttendance {
     pub id: i32,
     pub client_membership_id: i32,
     pub attended_at: NaiveDateTime,
+}
+
+impl Membership {
+    pub fn from_row(row: &MySqlRow) -> Self {
+        Self {
+            id: row.get("id"),
+            name: row.get("name"),
+            description: row.get("description"),
+            price: row.get("price"),
+            discipline_id: row.get("discipline_id"),
+            total_classes: row.get("total_classes"),
+            active: row.get::<i8, _>("active") != 0,
+            duration_days: row.get("duration_days"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+            deleted_at: row.get("deleted_at"),
+        }
+    }
 }
