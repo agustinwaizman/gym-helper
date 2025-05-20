@@ -80,12 +80,13 @@ impl Subscription {
         sqlx::query(
             r#"
             UPDATE subscriptions
-            SET remaining_classes = ?, expires_at = ?, updated_at = NOW()
+            SET remaining_classes = ?, expires_at = ?, updated_at = NOW(), active = ?, deleted_at = NULL
             WHERE id = ?
             "#,
         )
         .bind(remaining_classes)
         .bind(expires_at)
+        .bind(true)
         .bind(self.id)
         .execute(pool)
         .await?;
@@ -98,6 +99,23 @@ impl Subscription {
 
         Ok(Subscription::from_row(&row))
     }
+
+    pub async fn get_by_id(
+        pool: &MySqlPool,
+        id: i32,
+    ) -> Result<Option<Self>, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM subscriptions WHERE id = ?")
+            .bind(id)
+            .fetch_optional(pool)
+            .await?;
+
+        if let Some(row) = row {
+            Ok(Some(Subscription::from_row(&row)))
+        } else {
+            Ok(None)
+        }
+    }
+
 }
 
 #[derive(Serialize, Deserialize, Debug)]

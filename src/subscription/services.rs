@@ -18,6 +18,7 @@ pub async fn new_subscription(
     match request.validate(&pool).await {
         Ok(_) => {
             let membership = get_membership_by_id(&pool, request.membership_id).await.unwrap().unwrap();
+            let discipline_id = membership.discipline_id;
             match get_subscription_by_client_id(&pool, request.client_id, membership.discipline_id).await {
                 Ok(Some(subscription)) => {
                     let remaining_classes = subscription.remaining_classes + membership.total_classes;
@@ -43,5 +44,25 @@ pub async fn new_subscription(
             HttpResponse::BadRequest().body(format!("Error creating subscription {}", e))
         }
     }
+}
 
+#[get("/{id}")]
+pub async fn get_subscription_by_id(
+    pool: web::Data<MySqlPool>,
+    id: web::Path<i32>,
+) -> HttpResponse {
+    match Subscription::get_by_id(&pool, id.into_inner()).await {
+        Ok(Some(subscription)) => {
+            tracing::info!("Subscription fetched successfully");
+            HttpResponse::Ok().json(subscription)
+        },
+        Ok(None) => {
+            tracing::info!("Subscription not found");
+            HttpResponse::NotFound().body("Subscription not found")
+        },
+        Err(e) => {
+            tracing::error!("Error fetching subscription: {}", e);
+            HttpResponse::InternalServerError().body("Error fetching subscription")
+        }
+    }
 }

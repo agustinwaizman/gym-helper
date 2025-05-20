@@ -10,7 +10,8 @@ pub async fn get_subscription_by_client_id(
     let row = sqlx::query(
         r#"
         SELECT * FROM subscriptions
-        WHERE client_id = ? AND discipline_id = ?
+        WHERE client_id = ?
+        AND discipline_id = ?
         "#,
     )
     .bind(client_id)
