@@ -1,6 +1,7 @@
 mod config;
 mod db;
 mod logging;
+mod macros;
 mod auth;
 mod clients;
 mod membership;
