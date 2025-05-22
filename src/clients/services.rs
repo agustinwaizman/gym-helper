@@ -1,10 +1,12 @@
 use actix_web::{delete, get, patch, post, put, web, HttpResponse};
 use sqlx::MySqlPool;
-use crate::clients::models::requests::{CreateClientRequest, ClientQueryParams};
+use crate::clients::models::requests::{
+    CreateClientRequest, ClientQueryParams};
 use super::handlers::{
     obtain_client_by_id, create_client_in_db,
     obtain_clients, filter_clients, delete_client,
     update_client, activate_client};
+use crate::subscription::handlers::{get_all_client_subscriptions, delete_subscription_handler};
 
 #[post("/")]
 pub async fn create_client(
@@ -71,8 +73,18 @@ pub async fn delete_client_by_id(
     id: web::Path<i32>,
 ) -> HttpResponse {
     // TODO: Ver por que en caso de no encontrar el cliente devuelve un 200 Ok
-    match delete_client(&pool, id.into_inner()).await {
-        Ok(_) => HttpResponse::Ok().body("Client deleted successfully"),
+    let client_id = id.into_inner();
+    match delete_client(&pool, client_id).await {
+        Ok(_) => {
+            let client_subscriptions = get_all_client_subscriptions(&pool, client_id).await.unwrap();
+            if !client_subscriptions.is_empty() {
+                for subscription in client_subscriptions {
+                    tracing::info!("Deleting subscription with id: {}", subscription.id);
+                    delete_subscription_handler(&pool, subscription.id).await.unwrap();
+                }
+            }
+            tracing::info!("Client deleted successfully");
+            HttpResponse::Ok().body("Client deleted successfully")},
         Err(e) => {
             tracing::error!("Error deleting client: {}", e);
             HttpResponse::InternalServerError().body("Error deleting client")

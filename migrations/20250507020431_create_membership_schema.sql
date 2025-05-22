@@ -23,27 +23,26 @@ CREATE TABLE IF NOT EXISTS memberships (
         ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS client_memberships (
+CREATE TABLE IF NOT EXISTS subscriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     client_id INT NOT NULL,
-    membership_id INT NOT NULL,
-    purchased_at DATETIME NOT NULL,
+    discipline_id INT NOT NULL,
     remaining_classes INT DEFAULT NULL,
     expires_at DATETIME DEFAULT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME DEFAULT NULL,
-    CONSTRAINT fk_client_membership_client FOREIGN KEY (client_id) REFERENCES clients(id)
+    CONSTRAINT fk_subscriptions_client FOREIGN KEY (client_id) REFERENCES clients(id)
         ON DELETE CASCADE,
-    CONSTRAINT fk_client_membership_membership FOREIGN KEY (membership_id) REFERENCES memberships(id)
+    CONSTRAINT fk_subscriptions_discipline FOREIGN KEY (discipline_id) REFERENCES disciplines(id)
         ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS class_attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    client_membership_id INT NOT NULL,
+    subscription_id INT NOT NULL,
     attended_at DATETIME NOT NULL,
-    CONSTRAINT fk_class_attendance FOREIGN KEY (client_membership_id) REFERENCES client_memberships(id)
+    CONSTRAINT fk_class_attendance FOREIGN KEY (subscription_id) REFERENCES subscriptions(id)
         ON DELETE CASCADE
 ) ENGINE=InnoDB;

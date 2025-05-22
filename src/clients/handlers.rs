@@ -4,6 +4,7 @@ use super::models::clients::Client;
 use super::models::requests::{ClientQueryParams, CreateClientRequest};
 use sqlx::Arguments;
 use sqlx::mysql::MySqlArguments;
+use crate::add_filter;
 
 
 pub async fn create_client_in_db(
@@ -61,62 +62,21 @@ pub async fn filter_clients(
     let mut query = String::from("SELECT * FROM clients WHERE 1=1");
     let mut args = MySqlArguments::default();
 
-    if let Some(name) = &params.name {
-        query.push_str(" AND name = ?");
-        args.add(name);
-    }
-    if let Some(last_name) = &params.last_name {
-        query.push_str(" AND last_name = ?");
-        args.add(last_name);
-    }
-    if let Some(age) = params.age {
-        query.push_str(" AND age = ?");
-        args.add(age);
-    }
-    if let Some(phone) = &params.phone {
-        query.push_str(" AND phone = ?");
-        args.add(phone);
-    }
-    if let Some(active) = params.active {
-        query.push_str(" AND active = ?");
-        args.add(active);
-    }
-    if let Some(created_at) = params.created_at {
-        query.push_str(" AND created_at = ?");
-        args.add(created_at);
-    }
-    if let Some(updated_at) = params.updated_at {
-        query.push_str(" AND updated_at = ?");
-        args.add(updated_at);
-    }
-    if let Some(deleted_at) = params.deleted_at {
-        query.push_str(" AND deleted_at = ?");
-        args.add(deleted_at);
-    }
-    if let Some(from) = params.created_from {
-        query.push_str(" AND created_at >= ?");
-        args.add(from);
-    }
-    if let Some(to) = params.created_to {
-        query.push_str(" AND created_at <= ?");
-        args.add(to);
-    }
-    if let Some(from) = params.updated_from {
-        query.push_str(" AND updated_at >= ?");
-        args.add(from);
-    }
-    if let Some(to) = params.updated_to {
-        query.push_str(" AND updated_at <= ?");
-        args.add(to);
-    }
-    if let Some(from) = params.deleted_from {
-        query.push_str(" AND deleted_at >= ?");
-        args.add(from);
-    }
-    if let Some(to) = params.deleted_to {
-        query.push_str(" AND deleted_at <= ?");
-        args.add(to);
-    }
+    add_filter!(query, args, &params.name, " AND name = ?");
+    add_filter!(query, args, &params.last_name, " AND last_name = ?");
+    add_filter!(query, args, &params.age, " AND age = ?");
+    add_filter!(query, args, &params.phone, " AND phone = ?");
+    add_filter!(query, args, &params.active, " AND active = ?");
+    add_filter!(query, args, &params.created_at, " AND created_at = ?");
+    add_filter!(query, args, &params.updated_at, " AND updated_at = ?");
+    add_filter!(query, args, &params.deleted_at, " AND deleted_at = ?");
+    add_filter!(query, args, &params.created_from, " AND created_at >= ?");
+    add_filter!(query, args, &params.created_to, " AND created_at <= ?");
+    add_filter!(query, args, &params.updated_from, " AND updated_at >= ?");
+    add_filter!(query, args, &params.updated_to, " AND updated_at <= ?");
+    add_filter!(query, args, &params.deleted_from, " AND deleted_at >= ?");
+    add_filter!(query, args, &params.deleted_to, " AND deleted_at <= ?");
+
     let rows = sqlx::query_with(&query, args)
         .fetch_all(pool)
         .await?;
