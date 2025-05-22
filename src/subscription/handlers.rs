@@ -43,6 +43,28 @@ pub async fn get_subscription_by_client_id(
     }
 }
 
+pub async fn get_all_client_subscriptions(
+    pool: &MySqlPool,
+    client_id: i32,
+) -> Result<Vec<Subscription>, sqlx::Error> {
+    let rows = sqlx::query(
+        r#"
+        SELECT * FROM subscriptions
+        WHERE client_id = ?
+        "#,
+    )
+    .bind(client_id)
+    .fetch_all(pool)
+    .await?;
+
+    let subscriptions = rows
+        .into_iter()
+        .map(|row| Subscription::from_row(&row))
+        .collect();
+
+    Ok(subscriptions)
+}
+
 pub async fn get_subscription_by_id_handler(
     pool: &MySqlPool,
     id: i32,
@@ -160,4 +182,22 @@ pub async fn get_subscription_by_query_params_handler(
         .await?;
 
     Ok(rows.iter().map(Subscription::from_row).collect())
+}
+
+pub async fn delete_subscription_handler(
+    pool: &MySqlPool,
+    id: i32,
+) -> Result<sqlx::mysql::MySqlQueryResult, sqlx::Error> {
+    let result = sqlx::query(
+        r#"
+        UPDATE subscriptions
+        SET deleted_at = NOW(), active = false, remaining_classes = 0
+        WHERE id = ?
+        "#,
+    )
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    Ok(result)
 }
