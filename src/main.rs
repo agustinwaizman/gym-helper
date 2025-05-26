@@ -1,4 +1,4 @@
-mod config;
+ mod config;
 mod db;
 mod logging;
 mod macros;
@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
     tracing::info!("🚀 Gym Helper has been started.");
 
     let address = config.api_bind.clone();
-
+ 
     HttpServer::new(move || {
 
         let auth = HttpAuthentication::with_fn(auth::middleware::auth_middleware);
@@ -49,4 +49,12 @@ async fn main() -> std::io::Result<()> {
 #[protect("Trainer")]
 async fn test_of_auth() -> &'static str {
     "Hello, this is a test of auth"
+}
+
+#[actix_web::get("/stop_server")]
+async fn stop_server() -> &'static str {
+    
+    tracing::info!("Stop server");
+    std::process::exit(0);
+    "stop server"
 }

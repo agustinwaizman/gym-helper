@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 CREATE TABLE IF NOT EXISTS class_attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
     subscription_id INT NOT NULL,
-    attended_at DATETIME NOT NULL,
+    attended_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_class_attendance FOREIGN KEY (subscription_id) REFERENCES subscriptions(id)
         ON DELETE CASCADE
 ) ENGINE=InnoDB;

@@ -201,3 +201,21 @@ pub async fn delete_subscription_handler(
 
     Ok(result)
 }
+
+pub async fn new_attendance_handler(
+    pool: &MySqlPool,
+    subscription_id: i32,
+) -> Result<(), sqlx::Error> {
+
+    sqlx::query(
+        r#"
+        INSERT INTO class_attendance (subscription_id)
+        VALUES (?)
+        "#,
+    )
+    .bind(subscription_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
