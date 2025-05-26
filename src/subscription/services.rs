@@ -1,11 +1,12 @@
 use actix_web::{get, post, web, HttpResponse};
 use sqlx::MySqlPool;
-use super::models::{NewSubscriptionRequest, SubscriptionQueryParams};
+use super::models::{NewSubscriptionRequest, SubscriptionQueryParams, ClassAttendanceRequest};
 use crate::membership::handlers::get_membership_by_id;
 use super::handlers::{
     get_subscription_by_client_id, update_subscription_handler,
     create_subscription_handler, get_subscription_by_id_handler,
-    get_all_subscriptions_handler, get_subscription_by_query_params_handler};
+    get_all_subscriptions_handler, get_subscription_by_query_params_handler,
+    new_attendance_handler};
 
 use chrono::{Duration, Utc};
 
@@ -103,6 +104,44 @@ pub async fn get_subscription_by_query_params(
         Err(e) => {
             tracing::error!("Error fetching subscriptions: {}", e);
             HttpResponse::InternalServerError().body("Error fetching subscriptions")
+        }
+    }
+}
+
+#[post("/class_attandance")]
+pub async fn class_attandance(
+    pool: web::Data<MySqlPool>,
+    req: web::Json<ClassAttendanceRequest>,
+) -> HttpResponse {
+    let request = req.into_inner();
+    match request.validate(&pool).await {
+        Ok(mut subscription) => {
+            match new_attendance_handler(&pool, subscription.id).await {
+                Ok(_) => {
+                    subscription.remaining_classes -= 1;
+                    match update_subscription_handler(
+                        &pool, subscription.id,
+                        subscription.remaining_classes,
+                        subscription.expires_at).await {
+                        Ok(_) => {
+                            tracing::info!("Class attendance recorded successfully");
+                            HttpResponse::Ok().body("Class attendance recorded successfully")
+                        },
+                        Err(e) => {
+                            tracing::error!("Error updating subscription: {}", e);
+                            HttpResponse::InternalServerError().body("Error updating subscription")
+                        }
+                    }
+                },
+                Err(e) => {
+                    tracing::error!("Error recording class attendance: {}", e);
+                    HttpResponse::InternalServerError().body("Error recording class attendance")
+                }
+            }
+        },
+        Err(e) => {
+            tracing::error!("Error validating class attendance request: {}", e);
+            HttpResponse::BadRequest().body(format!("Error validating class attendance request: {}", e))
         }
     }
 }
