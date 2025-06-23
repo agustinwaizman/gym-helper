@@ -1,8 +1,9 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{mysql::MySqlRow, Row};
+use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct Discipline {
     pub id: i32,
     pub name: String, // "CrossFit", "Yoga", "Funcional", etc.
@@ -12,7 +13,7 @@ pub struct Discipline {
     pub deleted_at: Option<NaiveDateTime>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct Membership {
     pub id: i32,
     pub name: String,

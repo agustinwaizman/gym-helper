@@ -1,4 +1,4 @@
- mod config;
+mod config;
 mod db;
 mod logging;
 mod macros;
@@ -6,6 +6,7 @@ mod auth;
 mod clients;
 mod membership;
 mod subscription;
+mod openapi;
 
 use actix_web::{web, App, HttpServer};
 use config::Config;
@@ -13,6 +14,9 @@ use db::create_pool;
 use actix_web_httpauth::extractors::bearer::Config as BearerConfig;
 use actix_web_httpauth::middleware::HttpAuthentication;
 use actix_web_grants::protect;
+use openapi::ApiDoc;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -32,6 +36,19 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(db_pool.clone()))
             .app_data(web::Data::new(config.clone()))
             .app_data(BearerConfig::default().realm("jwt"))
+            // OpenAPI/Swagger documentation
+            .service(
+                SwaggerUi::new("/swagger-ui/{_:.*}")
+                    .url("/api-docs/openapi.json", ApiDoc::openapi())
+            )
+            .service(
+                web::resource("/api-docs/openapi.json")
+                    .route(web::get().to(|| async {
+                        actix_web::HttpResponse::Ok()
+                            .content_type("application/json")
+                            .json(ApiDoc::openapi())
+                    }))
+            )
             .configure(auth::routes)
             .configure(clients::routes)
             .configure(membership::routes)
@@ -56,5 +73,4 @@ async fn stop_server() -> &'static str {
     
     tracing::info!("Stop server");
     std::process::exit(0);
-    "stop server"
 }

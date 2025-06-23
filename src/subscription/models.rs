@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{mysql::MySqlRow, MySqlPool, Row};
 use chrono::NaiveDateTime;
+use utoipa::ToSchema;
 use super::handlers::get_subscription_by_id_handler;
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct Subscription {
     pub id: i32,
     pub client_id: i32,
@@ -17,7 +18,7 @@ pub struct Subscription {
     pub deleted_at: Option<NaiveDateTime>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct SubscriptionQueryParams {
     pub client_id: Option<i32>,
     pub discipline_id: Option<i32>,
@@ -36,14 +37,15 @@ pub struct SubscriptionQueryParams {
     pub expires_at_to: Option<NaiveDateTime>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct ClassAttendance {
     pub id: i32,
     pub subscription_id: i32,
     pub attended_at: NaiveDateTime,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
+#[schema(example = json!({"subscription_id": 1}))]
 pub struct ClassAttendanceRequest {
     pub subscription_id: i32,
 }
@@ -111,7 +113,8 @@ impl Subscription {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[schema(example = json!({"client_id": 1, "membership_id": 1}))]
 pub struct NewSubscriptionRequest{
     pub client_id: i32,
     pub membership_id: i32,

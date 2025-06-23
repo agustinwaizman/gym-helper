@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{Row, mysql::MySqlRow};
 use chrono::NaiveDateTime;
+use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct Client {
     pub id: i32,
     pub name: String,

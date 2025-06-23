@@ -17,3 +17,10 @@ actix-web-httpauth = "0.8.2"
 argon2 = "0.5"
 rand = "0.9.1"
 actix-web-grants = "4.1.2"
+utoipa = { version = "4.2", features = ["actix_extras", "chrono"] }
+utoipa-swagger-ui = { version = "6.0", features = ["actix-web"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+sqlx = { version = "0.8.3", features = ["mysql", "runtime-tokio-native-tls", "uuid", "chrono", "macros"] }
+mockall = "0.12"
