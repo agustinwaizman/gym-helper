@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
+use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[schema(example = json!({"name": "Juan", "last_name": "Pérez", "age": 25, "phone": "123456789"}))]
 pub struct CreateClientRequest {
     pub name: String,
     pub last_name: String,
@@ -9,7 +11,7 @@ pub struct CreateClientRequest {
     pub phone: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, ToSchema)]
 pub struct ClientQueryParams {
     pub name: Option<String>,
     pub last_name: Option<String>,

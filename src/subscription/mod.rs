@@ -11,6 +11,6 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .service(services::get_subscription_by_query_params)
             .service(services::get_subscription_by_id)
             .service(services::get_all_subscriptions)
-            .service(services::class_attandance)
+            .service(services::class_attendance)
     );
 }

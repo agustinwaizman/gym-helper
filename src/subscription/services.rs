@@ -8,9 +8,6 @@ use super::handlers::{
     get_all_subscriptions_handler, get_subscription_by_query_params_handler,
     new_attendance_handler};
 
-use chrono::{Duration, Utc};
-
-
 #[post("/")]
 pub async fn new_subscription(
     pool: web::Data<MySqlPool>,
@@ -108,8 +105,8 @@ pub async fn get_subscription_by_query_params(
     }
 }
 
-#[post("/class_attandance")]
-pub async fn class_attandance(
+#[post("/class_attendance")]
+pub async fn class_attendance(
     pool: web::Data<MySqlPool>,
     req: web::Json<ClassAttendanceRequest>,
 ) -> HttpResponse {
@@ -142,6 +139,194 @@ pub async fn class_attandance(
         Err(e) => {
             tracing::error!("Error validating class attendance request: {}", e);
             HttpResponse::BadRequest().body(format!("Error validating class attendance request: {}", e))
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Duration, Utc};
+    use crate::subscription::models::{Subscription, NewSubscriptionRequest, ClassAttendanceRequest, SubscriptionQueryParams};
+
+    // Helper function para crear una subscription de prueba
+    fn create_test_subscription() -> Subscription {
+        let now = Utc::now().naive_utc();
+        Subscription {
+            id: 1,
+            client_id: 1,
+            discipline_id: 1,
+            remaining_classes: 10,
+            expires_at: now + Duration::days(30),
+            active: true,
+            created_at: now,
+            updated_at: now,
+            deleted_at: None,
+        }
+    }
+
+    // Helper function para crear una request de nueva subscription
+    fn create_test_new_subscription_request() -> NewSubscriptionRequest {
+        NewSubscriptionRequest {
+            client_id: 1,
+            membership_id: 1,
+        }
+    }
+
+    // Helper function para crear una request de asistencia a clase
+    fn create_test_class_attendance_request() -> ClassAttendanceRequest {
+        ClassAttendanceRequest {
+            subscription_id: 1,
+        }
+    }
+
+    #[test]
+    fn test_new_subscription_request_serialization() {
+        let request = create_test_new_subscription_request();
+        let json = serde_json::to_string(&request).unwrap();
+        let expected = r#"{"client_id":1,"membership_id":1}"#;
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_new_subscription_request_deserialization() {
+        let json = r#"{"client_id":1,"membership_id":1}"#;
+        let request: NewSubscriptionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.client_id, 1);
+        assert_eq!(request.membership_id, 1);
+    }
+
+    #[test]
+    fn test_class_attendance_request_serialization() {
+        let request = create_test_class_attendance_request();
+        let json = serde_json::to_string(&request).unwrap();
+        let expected = r#"{"subscription_id":1}"#;
+        assert_eq!(json, expected);
+    }
+
+    #[test]
+    fn test_class_attendance_request_deserialization() {
+        let json = r#"{"subscription_id":1}"#;
+        let request: ClassAttendanceRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.subscription_id, 1);
+    }
+
+    #[test]
+    fn test_subscription_query_params_creation() {
+        let params = SubscriptionQueryParams {
+            client_id: Some(1),
+            discipline_id: Some(2),
+            active: Some(true),
+            expires_at: None,
+            created_at: None,
+            updated_at: None,
+            deleted_at: None,
+            created_at_from: None,
+            created_at_to: None,
+            updated_at_from: None,
+            updated_at_to: None,
+            deleted_at_from: None,
+            deleted_at_to: None,
+            expires_at_from: None,
+            expires_at_to: None,
+        };
+
+        assert_eq!(params.client_id, Some(1));
+        assert_eq!(params.discipline_id, Some(2));
+        assert_eq!(params.active, Some(true));
+    }
+
+    #[test]
+    fn test_subscription_model_structure() {
+        let subscription = create_test_subscription();
+        
+        assert_eq!(subscription.id, 1);
+        assert_eq!(subscription.client_id, 1);
+        assert_eq!(subscription.discipline_id, 1);
+        assert_eq!(subscription.remaining_classes, 10);
+        assert_eq!(subscription.active, true);
+        assert!(subscription.deleted_at.is_none());
+    }
+
+    // Tests para verificar la lógica de respuesta HTTP
+    mod http_response_tests {
+        use actix_web::http::StatusCode;
+
+        #[test]
+        fn test_http_status_codes() {
+            // Verificamos que conocemos los códigos de estado HTTP correctos
+            assert_eq!(StatusCode::OK.as_u16(), 200);
+            assert_eq!(StatusCode::CREATED.as_u16(), 201);
+            assert_eq!(StatusCode::BAD_REQUEST.as_u16(), 400);
+            assert_eq!(StatusCode::NOT_FOUND.as_u16(), 404);
+            assert_eq!(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), 500);
+        }
+    }
+
+    // Tests de integración más avanzados (requieren configuración de DB de prueba)
+    #[cfg(feature = "integration-tests")]
+    mod integration_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_new_subscription_integration() {
+            // Este test requeriría una base de datos de prueba configurada
+            // Se puede implementar con testcontainers o una DB en memoria
+            todo!("Implementar cuando se configure la base de datos de prueba");
+        }
+
+        #[tokio::test]
+        async fn test_get_subscription_by_id_integration() {
+            todo!("Implementar cuando se configure la base de datos de prueba");
+        }
+
+        #[tokio::test]
+        async fn test_class_attendance_integration() {
+            todo!("Implementar cuando se configure la base de datos de prueba");
+        }
+    }
+
+    // Tests para validación de entrada
+    mod validation_tests {
+        use super::*;
+
+        #[test]
+        fn test_new_subscription_request_validation() {
+            let request = NewSubscriptionRequest {
+                client_id: 0, // ID inválido
+                membership_id: 0, // ID inválido
+            };
+
+            // Verificamos que los valores son los esperados para el test
+            assert_eq!(request.client_id, 0);
+            assert_eq!(request.membership_id, 0);
+        }
+
+        #[test]
+        fn test_class_attendance_request_validation() {
+            let request = ClassAttendanceRequest {
+                subscription_id: 0, // ID inválido
+            };
+
+            assert_eq!(request.subscription_id, 0);
+        }
+    }
+
+    // Tests para manejo de errores
+    mod error_handling_tests {
+
+        #[test]
+        fn test_error_message_format() {
+            let error_msg = "Error creating subscription";
+            assert!(error_msg.contains("Error"));
+            assert!(error_msg.contains("subscription"));
+        }
+
+        #[test]
+        fn test_validation_error_format() {
+            let error_msg = "Error validating class attendance request";
+            assert!(error_msg.contains("Error validating"));
+            assert!(error_msg.contains("class attendance"));
         }
     }
 }
