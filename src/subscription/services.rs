@@ -7,7 +7,6 @@ use super::handlers::{
     create_subscription_handler, get_subscription_by_id_handler,
     get_all_subscriptions_handler, get_subscription_by_query_params_handler,
     new_attendance_handler};
-use chrono::{Duration, Utc};
 
 #[post("/")]
 pub async fn new_subscription(
